@@ -1,0 +1,60 @@
+{
+  "features": [
+    "time_step",
+    "hour",
+    "density",
+    "avg_wait_time",
+    "congestion_level_enc"
+  ],
+  "targets": [
+    "north_vehicles",
+    "south_vehicles",
+    "east_vehicles",
+    "west_vehicles"
+  ],
+  "congestion_map": {
+    "LOW": 0,
+    "MEDIUM": 1,
+    "HIGH": 2
+  },
+  "test_size": 0.2,
+  "train_rows": 9600,
+  "test_rows": 2400,
+  "random_forest_metrics": {
+    "north_vehicles": {
+      "mae": 0.2935,
+      "r2": 0.9508
+    },
+    "south_vehicles": {
+      "mae": 0.2818,
+      "r2": 0.9526
+    },
+    "east_vehicles": {
+      "mae": 0.2795,
+      "r2": 0.955
+    },
+    "west_vehicles": {
+      "mae": 0.2806,
+      "r2": 0.9545
+    }
+  },
+  "linear_regression_metrics": {
+    "north_vehicles": {
+      "mae": 0.2832,
+      "r2": 0.9557
+    },
+    "south_vehicles": {
+      "mae": 0.2709,
+      "r2": 0.9574
+    },
+    "east_vehicles": {
+      "mae": 0.2696,
+      "r2": 0.9589
+    },
+    "west_vehicles": {
+      "mae": 0.2749,
+      "r2": 0.9574
+    }
+  },
+  "recommended_model": "rf_model.pkl"
+}
