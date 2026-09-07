@@ -1,0 +1,9 @@
+{
+  "simulation_speed": 1.0,
+  "pso_iterations": 75,
+  "pso_particles": 30,
+  "model_selection": "rf_model.pkl",
+  "logging_level": "INFO",
+  "enable_notifications": true,
+  "enable_animations": true
+}

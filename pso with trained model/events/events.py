@@ -33,6 +33,11 @@ class EventType(str, Enum):
     SETTINGS_CHANGED = "settings.changed"
     USER_LOGGED_IN = "user.logged_in"
     MODEL_ACTIVATED = "model.activated"
+    ANOMALY_DETECTED = "anomaly.detected"
+    FORECAST_CREATED = "forecast.created"
+    EMERGENCY_OVERRIDE = "emergency.override"
+    INCIDENT_REPORTED = "incident.reported"      # Phase 5
+    MODEL_RETRAINED = "model.retrained"          # Phase 5
 
 
 class Event:

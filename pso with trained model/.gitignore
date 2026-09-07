@@ -1,0 +1,59 @@
+# Environments
+venv/
+.venv/
+env/
+.env
+.env.*
+!.env.example
+
+# Python caches
+__pycache__/
+*.py[cod]
+*$py.class
+*.egg-info/
+*.egg
+
+# Virtualenv binaries / scripts (optional)
+venv/Scripts/
+venv/Lib/
+
+# IDE + OS
+.idea/
+.vscode/
+*.swp
+*.swo
+.DS_Store
+Thumbs.db
+
+# Logs
+logs/
+*.log
+
+# Reports (directory kept; scratch test artifacts excluded)
+reports/
+!reports/.gitkeep
+
+# Trained models (large artifacts; kept locally / mounted as volumes in Docker)
+saved_models/*.pkl
+saved_models/*.pt
+
+# pytest
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+.nox/
+
+# Coverage / profiling
+coverage.xml
+*.cover
+*.prof
+
+# Build / dist
+dist/
+build/
+*.whl
+
+# Misc scratch
+*.tmp
+*.bak

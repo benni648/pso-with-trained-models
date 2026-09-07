@@ -1,0 +1,20 @@
+# =====================================================================
+# Prometheus scrape configuration — Phase 5 (Step 5.2)
+# =====================================================================
+# Scrapes the Flask app's /metrics endpoint (prometheus-client).
+# In docker-compose the app is reachable as "app:5000"; for local
+# (non-Docker) use, change the target to localhost:5000.
+# =====================================================================
+
+global:
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+scrape_configs:
+  - job_name: "pso-traffic-app"
+    metrics_path: /metrics
+    static_configs:
+      - targets: ["app:5000"]
+        labels:
+          service: "pso-traffic-api"
+          env: "production"

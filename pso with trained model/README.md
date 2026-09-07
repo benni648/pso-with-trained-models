@@ -542,10 +542,9 @@ Phase 2 transforms the system into a production-grade enterprise platform with:
 ### Phase 2 Documentation
 
 See `documentation/` for comprehensive guides:
+- **MASTER_DEVELOPMENT_PLAN.md** - Master plan with all phases and file inventory
 - **PHASE_2_GUIDE.md** - Complete feature guide (600+ lines)
-- **PHASE_2_QUICK_START.md** - Quick startup (5 minutes)
 - **PHASE_2_COMPLETION.md** - Implementation details
-- **PHASE_2_INTEGRATION_CHECKLIST.md** - Deployment checklist
 
 ### Phase 2 Configuration
 

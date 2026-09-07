@@ -1,0 +1,127 @@
+# =====================================================================
+# PSO Smart Traffic Signal Optimization — Docker Compose
+# =====================================================================
+# Services:
+#   app        — Flask API (port 5000)
+#   db         — PostgreSQL 15 (port 5432)
+#   redis      — Redis 7 (port 6379)
+#   worker     — Celery worker
+#   beat       — Celery beat scheduler
+#   prometheus — Metrics scraper (Phase 5, port 9090)
+#   grafana    — Dashboards (Phase 5, port 3000; admin/admin)
+#
+# Usage:
+#   docker compose up --build
+# =====================================================================
+version: "3.9"
+
+services:
+  app:
+    build: .
+    ports:
+      - "5000:5000"
+    environment:
+      ENVIRONMENT: production
+      DEBUG: "false"
+      DATABASE_URL: postgresql://pso_user:pso_password@db:5432/pso_traffic
+      REDIS_URL: redis://redis:6379/0
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      JWT_SECRET_KEY: ${JWT_SECRET_KEY:-change-me-in-production-64-char-min}
+      CORS_ORIGINS: ${CORS_ORIGINS:-*}
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./saved_models:/app/saved_models
+      - ./reports:/app/reports
+      - ./logs:/app/logs
+    restart: unless-stopped
+
+  db:
+    image: postgres:15
+    environment:
+      POSTGRES_USER: pso_user
+      POSTGRES_PASSWORD: pso_password
+      POSTGRES_DB: pso_traffic
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pso_user -d pso_traffic"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  redis:
+    image: redis:7
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+    restart: unless-stopped
+
+  worker:
+    build: .
+    command: celery -A workers.celery_app worker --loglevel=info
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+      DATABASE_URL: postgresql://pso_user:pso_password@db:5432/pso_traffic
+    depends_on:
+      - db
+      - redis
+    volumes:
+      - ./saved_models:/app/saved_models
+      - ./reports:/app/reports
+    restart: unless-stopped
+
+  beat:
+    build: .
+    command: celery -A workers.celery_app beat --loglevel=info
+    environment:
+      CELERY_BROKER_URL: redis://redis:6379/0
+      CELERY_RESULT_BACKEND: redis://redis:6379/0
+    depends_on:
+      - db
+      - redis
+    restart: unless-stopped
+
+# ── Phase 5: observability stack ─────────────────────────────
+  prometheus:
+    image: prom/prometheus:v2.53.0
+    command:
+      - --config.file=/etc/prometheus/prometheus.yml
+      - --storage.tsdb.retention.time=7d
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - promdata:/prometheus
+    depends_on:
+      - app
+    restart: unless-stopped
+
+  grafana:
+    image: grafana/grafana:11.1.0
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_USERS_ALLOW_SIGN_UP: "false"
+    volumes:
+      - ./monitoring/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./monitoring/grafana/dashboards:/var/lib/grafana/dashboards:ro
+      - grafanadata:/var/lib/grafana
+    depends_on:
+      - prometheus
+    restart: unless-stopped
+
+volumes:
+  pgdata:
+  redisdata:
+  promdata:
+  grafanadata:

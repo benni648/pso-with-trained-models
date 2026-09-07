@@ -22,39 +22,29 @@
   "test_rows": 2400,
   "random_forest_metrics": {
     "north_vehicles": {
-      "mae": 0.2935,
-      "r2": 0.9508
+      "mae": 0.2933,
+      "r2": 0.951
     },
     "south_vehicles": {
-      "mae": 0.2818,
-      "r2": 0.9526
+      "mae": 0.2815,
+      "r2": 0.9528
     },
     "east_vehicles": {
-      "mae": 0.2795,
-      "r2": 0.955
+      "mae": 0.2794,
+      "r2": 0.9551
     },
     "west_vehicles": {
-      "mae": 0.2806,
-      "r2": 0.9545
+      "mae": 0.2801,
+      "r2": 0.9547
     }
   },
-  "linear_regression_metrics": {
-    "north_vehicles": {
-      "mae": 0.2832,
-      "r2": 0.9557
-    },
-    "south_vehicles": {
-      "mae": 0.2709,
-      "r2": 0.9574
-    },
-    "east_vehicles": {
-      "mae": 0.2696,
-      "r2": 0.9589
-    },
-    "west_vehicles": {
-      "mae": 0.2749,
-      "r2": 0.9574
-    }
+  "random_forest_params": {
+    "n_estimators": 150,
+    "max_depth": null,
+    "min_samples_split": 5,
+    "min_samples_leaf": 2,
+    "random_state": 42,
+    "n_jobs": -1
   },
   "recommended_model": "rf_model.pkl"
 }

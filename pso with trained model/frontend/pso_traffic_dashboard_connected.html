@@ -2920,5 +2920,144 @@ setInterval(()=>{
   });
 },4000);
 </script>
+<!-- ============================================================
+     PHASE 2: WEBSOCKET LIVE DASHBOARD (Socket.IO)
+     Live vehicle counts, signal timings, health metrics and the
+     camera feed are pushed from the server in real-time.
+     Falls back silently to the animated simulation if the
+     WebSocket connection is unavailable.
+     ============================================================ -->
+<script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.7.5/socket.io.min.js"></script>
+<script>
+(function(){
+  'use strict';
+  if(typeof io === 'undefined') return; // no WebSocket support — keep simulation
+
+  // ── Floating LIVE indicator + FPS/latency pill ──────────────
+  const pill = document.createElement('div');
+  pill.id = 'live-pill';
+  pill.style.cssText = 'position:fixed;bottom:14px;left:14px;z-index:9999;display:flex;align-items:center;gap:8px;padding:6px 12px;border-radius:20px;font-family:JetBrains Mono,monospace;font-size:.6rem;letter-spacing:.12em;background:rgba(0,0,0,.75);border:1px solid rgba(0,255,163,.35);color:var(--g);pointer-events:none';
+  pill.innerHTML = '<span id="live-dot" style="width:7px;height:7px;border-radius:50%;background:var(--a);box-shadow:0 0 8px var(--a);display:inline-block"></span>' +
+    '<span id="live-label">LIVE: CONNECTING</span>' +
+    '<span id="live-metrics" style="color:var(--t3);margin-left:4px"></span>';
+  document.body.appendChild(pill);
+
+  // ── Camera feed toggle button + panel ───────────────────────
+  const camBtn = document.createElement('button');
+  camBtn.id = 'cam-toggle';
+  camBtn.textContent = '📷 LIVE CAMERA';
+  camBtn.style.cssText = 'position:fixed;bottom:14px;right:14px;z-index:9999;padding:7px 14px;border-radius:6px;font-family:JetBrains Mono,monospace;font-size:.62rem;letter-spacing:.12em;cursor:pointer;background:rgba(0,0,0,.75);color:var(--c);border:1px solid rgba(0,210,255,.35)';
+  document.body.appendChild(camBtn);
+
+  const camPanel = document.createElement('div');
+  camPanel.id = 'cam-panel';
+  camPanel.style.cssText = 'position:fixed;right:14px;bottom:52px;z-index:9998;display:none;width:420px;max-width:90vw;background:rgba(0,0,0,.85);border:1px solid rgba(0,210,255,.3);border-radius:8px;overflow:hidden;font-family:JetBrains Mono,monospace;font-size:.58rem;color:var(--t3)';
+  camPanel.innerHTML = '<div style="padding:6px 10px;letter-spacing:.15em;color:var(--c);border-bottom:1px solid var(--border)">CAMERA FEED <span id="cam-status" style="color:var(--t3)">(not running)</span></div>' +
+    '<img id="cam-img" alt="camera feed" style="width:100%;display:block;background:#000">' +
+    '<div style="padding:5px 10px">Start via POST /api/camera/start, then this feed streams annotated frames.</div>';
+  document.body.appendChild(camPanel);
+
+  camBtn.addEventListener('click', function(){
+    const hidden = camPanel.style.display === 'none';
+    camPanel.style.display = hidden ? 'block' : 'none';
+    camBtn.textContent = hidden ? '📷 HIDE CAMERA' : '📷 LIVE CAMERA';
+    if(hidden) refreshCameraFeed();
+  });
+
+  function refreshCameraFeed(){
+    const img = document.getElementById('cam-img');
+    if(!img) return;
+    // MJPEG stream from the server (ends when pipeline stops)
+    img.src = '/api/camera/frame?t=' + Date.now();
+    fetch('/api/camera/status')
+      .then(r => r.json())
+      .then(d => {
+        const el = document.getElementById('cam-status');
+        if(el){
+          const running = d && d.data && d.data.running;
+          el.textContent = running ? '(RUNNING)' : '(not running)';
+          el.style.color = running ? 'var(--g)' : 'var(--t3)';
+        }
+      })
+      .catch(()=>{});
+  }
+
+  // ── DOM helper ──────────────────────────────────────────────
+  function setText(id, value){
+    const el = document.getElementById(id);
+    if(el) el.textContent = value;
+  }
+
+  // ── Connect to server ───────────────────────────────────────
+  const socket = io();
+  let connected = false;
+
+  socket.on('connect', function(){
+    connected = true;
+    setText('live-label', 'LIVE: CONNECTED');
+    const dot = document.getElementById('live-dot');
+    if(dot){ dot.style.background = 'var(--g)'; dot.style.boxShadow = '0 0 8px var(--g)'; }
+    socket.emit('subscribe', { intersection_id: 'default' });
+  });
+
+  socket.on('disconnect', function(){
+    connected = false;
+    setText('live-label', 'LIVE: DISCONNECTED');
+    const dot = document.getElementById('live-dot');
+    if(dot){ dot.style.background = 'var(--a)'; dot.style.boxShadow = '0 0 8px var(--a)'; }
+  });
+
+  // ── vehicle_count → lane queues + processed stat ────────────
+  socket.on('vehicle_count', function(data){
+    if(!data) return;
+    const dirs = [['north',1],['south',2],['east',3],['west',4]];
+    dirs.forEach(function(pair){
+      const val = data[pair[0]] || 0;
+      setText('q'+pair[1]+'-val', val + ' veh');
+      const bar = document.getElementById('q'+pair[1]+'-bar');
+      if(bar) bar.style.width = Math.min(100, val * 4) + '%';
+    });
+    if(data.total !== undefined) setText('stat-proc', data.total);
+    setText('fx-vehicles', (data.total !== undefined ? data.total : '—'));
+  });
+
+  // ── signal_timing → signal timers + timing display ──────────
+  socket.on('signal_timing', function(data){
+    if(!data) return;
+    const map = [['north_green','N'],['south_green','S'],['east_green','E'],['west_green','W']];
+    map.forEach(function(pair){
+      if(data[pair[0]] !== undefined) setText('timer-'+pair[1], data[pair[0]] + 's');
+    });
+    const greens = map.map(p => data[p[0]]).filter(v => v !== undefined);
+    if(greens.length) setText('fx-timing', greens.map(g => g+'s').join(' / '));
+  });
+
+  // ── health_update → FPS / latency / confidence ──────────────
+  socket.on('health_update', function(data){
+    if(!data) return;
+    const metrics = document.getElementById('live-metrics');
+    if(metrics){
+      const fps = data.fps ? data.fps + ' fps' : '';
+      const lat = data.latency_ms !== undefined ? data.latency_ms + 'ms' : '';
+      metrics.textContent = [fps, lat].filter(Boolean).join(' · ');
+    }
+  });
+
+  // ── alert → flash banner ────────────────────────────────────
+  socket.on('alert', function(data){
+    if(!data || !data.message) return;
+    const banner = document.createElement('div');
+    banner.textContent = '⚠ ' + data.message;
+    banner.style.cssText = 'position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:9999;padding:10px 18px;border-radius:6px;font-family:JetBrains Mono,monospace;font-size:.68rem;background:rgba(255,80,80,.15);color:#ff6b6b;border:1px solid rgba(255,80,80,.5)';
+    document.body.appendChild(banner);
+    setTimeout(function(){ banner.remove(); }, 4000);
+  });
+
+  // Auto-check camera status every 15s so the panel reflects reality
+  setInterval(function(){
+    if(connected && camPanel.style.display !== 'none') refreshCameraFeed();
+  }, 15000);
+})();
+</script>
 </body>
 </html>

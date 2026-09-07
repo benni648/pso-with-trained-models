@@ -1,0 +1,34 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.venv/
+venv/
+
+# Environment & secrets
+.env
+.env.*
+!.env.example
+
+# Logs & reports
+logs/
+reports/
+*.log
+
+# Models (trained at runtime or mounted as volumes)
+saved_models/*.pkl
+
+# Tests & docs
+.pytest_cache/
+.coverage
+htmlcov/
+tests/
+
+# Misc
+.git/
+.gitignore
+Dockerfile
+docker-compose.yml
+.dockerignore
+README.md
+*.md

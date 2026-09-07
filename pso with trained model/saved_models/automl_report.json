@@ -1,0 +1,57 @@
+{
+  "generated_at": "2026-09-05T17:44:38",
+  "elapsed_s": 26.4,
+  "quick_mode": true,
+  "dataset": {
+    "train_rows": 9600,
+    "test_rows": 2400
+  },
+  "features": [
+    "time_step",
+    "hour",
+    "density",
+    "avg_wait_time",
+    "congestion_level_enc"
+  ],
+  "targets": [
+    "north_vehicles",
+    "south_vehicles",
+    "east_vehicles",
+    "west_vehicles"
+  ],
+  "results": [
+    {
+      "model": "ridge",
+      "params": {
+        "alpha": 0.1
+      },
+      "avg_r2": 0.9573,
+      "avg_mae": 0.2746
+    },
+    {
+      "model": "gradient_boosting",
+      "params": {
+        "n_estimators": 100,
+        "learning_rate": 0.05,
+        "max_depth": 2
+      },
+      "avg_r2": 0.9568,
+      "avg_mae": 0.2772
+    },
+    {
+      "model": "random_forest",
+      "params": {
+        "n_estimators": 150,
+        "min_samples_leaf": 4
+      },
+      "avg_r2": 0.953,
+      "avg_mae": 0.2839
+    }
+  ],
+  "best_model": {
+    "name": "ridge",
+    "avg_r2": 0.9573,
+    "saved_as": "automl_best_model.pkl"
+  },
+  "note": "Production API continues to serve rf_model.pkl; activate the AutoML winner by replacing rf_model.pkl or updating the prediction service."
+}
